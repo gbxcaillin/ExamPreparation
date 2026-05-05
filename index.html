@@ -374,7 +374,7 @@ a { color: inherit; }
         <div class="sb-stat"><div class="sb-stat-label">Exams done</div><div class="sb-stat-val" id="sb-exams" style="color:var(--bloom)">0</div></div>
         <div class="sb-stat"><div class="sb-stat-label">Top score</div><div class="sb-stat-val" id="sb-best" style="color:var(--bloom)">—</div></div>
       </div>
-      <div id="sb-footer">Desktop v3.10<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
+      <div id="sb-footer">Desktop v3.11<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
     </aside>
 
     <!-- SCREENS -->
@@ -655,7 +655,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.10</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.11</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -1020,7 +1020,7 @@ function parseValuesTab(rows) {
         opts: [(r[4]||'').trim(),(r[5]||'').trim(),(r[6]||'').trim(),(r[7]||'').trim()],
         correct: correctIndex((r[8]||'A').trim()),
         topic: (r[1]||'Code Values').trim(),
-        expl: (r[10]||'').trim()
+        expl: (r[11]||r[10]||'').trim()
       });
     }
     return qs;
@@ -1074,7 +1074,7 @@ function parseScenarioTabs(qRows, aRows) {
     // Scenarios tab — fixed column layout, no shifting:
     // r[0]=#  r[1]=ScenarioName  r[2]=Narrative (may be empty)  r[3]=Question
     // r[4]=OptA  r[5]=OptB  r[6]=OptC  r[7]=OptD
-    // r[8]=CorrectLetter  r[9]=CorrectAnswer  r[10]=Explanation
+    // r[8]=CorrectLetter  r[9]=CorrectAnswer  r[10]=CorrectAnswerText  r[11]=Explanation
     // Google Sheets CSV always preserves column positions — empty cells come
     // through as empty strings, never shift adjacent columns.
     const qs = [];
@@ -1096,7 +1096,7 @@ function parseScenarioTabs(qRows, aRows) {
         topic: scenarioKey,
         scenario: narrative,
         scenario_key: scenarioKey,
-        expl: (r[10]||'').trim()
+        expl: (r[11]||r[10]||'').trim()
       });
     }
     return qs;
