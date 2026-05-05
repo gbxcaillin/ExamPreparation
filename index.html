@@ -374,7 +374,7 @@ a { color: inherit; }
         <div class="sb-stat"><div class="sb-stat-label">Exams done</div><div class="sb-stat-val" id="sb-exams" style="color:var(--bloom)">0</div></div>
         <div class="sb-stat"><div class="sb-stat-label">Top score</div><div class="sb-stat-val" id="sb-best" style="color:var(--bloom)">—</div></div>
       </div>
-      <div id="sb-footer">Desktop v3.9<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
+      <div id="sb-footer">Desktop v3.10<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
     </aside>
 
     <!-- SCREENS -->
@@ -483,10 +483,10 @@ a { color: inherit; }
               <div class="ans-heading" id="prac-ans-heading" style="margin-bottom:0">Select the best answer</div>
               <div style="font-size:10px;color:var(--text-faint)" id="kbd-hint">A–D or 1–4 · Enter to confirm · M to flag</div>
             </div>
-            <div id="prac-result"></div>
             <div id="prac-opts"></div>
             <button class="btn-confirm" id="prac-btn-confirm" onclick="Practice.confirm()" disabled>Confirm answer →</button>
             <button class="btn-redo hidden" id="prac-btn-redo" onclick="Practice.redoMistakes()" style="margin-top:10px">Redo my mistakes →</button>
+            <div id="prac-result" style="margin-top:12px"></div>
             <div id="prac-expl" class="expl-box hidden">
               <div class="expl-lbl">Explanation</div>
               <div class="expl-body" id="prac-expl-body"></div>
@@ -655,7 +655,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.9</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.10</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -1315,16 +1315,15 @@ const Practice = {
     this._secTrack = {};
     // Reset right panel in case it was showing session complete
     const right = document.getElementById('prac-right');
-    if (right) right.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div class="ans-heading" id="prac-ans-heading" style="margin-bottom:0">Select the best answer</div>
-        <div style="font-size:10px;color:var(--text-faint)" id="kbd-hint">A–D or 1–4 · Enter to confirm · M to flag</div>
-      </div>
-      <div id="prac-result"></div>\n      <div id="prac-opts"></div>
-      <button class="btn-confirm" id="prac-btn-confirm" onclick="Practice.confirm()" disabled>Confirm answer →</button>
-      <button class="btn-redo hidden" id="prac-btn-redo" onclick="Practice.redoMistakes()" style="margin-top:10px"></button>
-      <div id="prac-expl" class="expl-box hidden"><div class="expl-lbl">Explanation</div><div class="expl-body" id="prac-expl-body"></div></div>
-    `;
+    if (right) right.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+      '<div class="ans-heading" id="prac-ans-heading" style="margin-bottom:0">Select the best answer</div>' +
+      '<div style="font-size:10px;color:var(--text-faint)" id="kbd-hint">A–D or 1–4 · Enter to confirm · M to flag</div>' +
+      '</div>' +
+      '<div id="prac-opts"></div>' +
+      '<button class="btn-confirm" id="prac-btn-confirm" onclick="Practice.confirm()" disabled>Confirm answer →</button>' +
+      '<button class="btn-redo hidden" id="prac-btn-redo" onclick="Practice.redoMistakes()" style="margin-top:10px"></button>' +
+      '<div id="prac-result" style="margin-top:12px"></div>' +
+      '<div id="prac-expl" class="expl-box hidden"><div class="expl-lbl">Explanation</div><div class="expl-body" id="prac-expl-body"></div></div>';
     const redoBtn = document.getElementById('prac-btn-redo');
     if (redoBtn) redoBtn.classList.add('hidden');
     this.render();
