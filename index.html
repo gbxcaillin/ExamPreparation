@@ -374,7 +374,7 @@ a { color: inherit; }
         <div class="sb-stat"><div class="sb-stat-label">Exams done</div><div class="sb-stat-val" id="sb-exams" style="color:var(--bloom)">0</div></div>
         <div class="sb-stat"><div class="sb-stat-label">Top score</div><div class="sb-stat-val" id="sb-best" style="color:var(--bloom)">—</div></div>
       </div>
-      <div id="sb-footer">Desktop v3.7<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
+      <div id="sb-footer">Desktop v3.8<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
     </aside>
 
     <!-- SCREENS -->
@@ -491,6 +491,7 @@ a { color: inherit; }
               <div class="expl-lbl">Explanation</div>
               <div class="expl-body" id="prac-expl-body"></div>
             </div>
+
           </div>
         </div>
       </div>
@@ -654,7 +655,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.7</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.8</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -794,11 +795,11 @@ function fmt(expl) {
 }
 function typeTag(q) {
   if (q.pool === 'TrueFalse') return 'True / False';
-  if (q.pool === 'Scenario') return 'Scenario MCQ';
+  if (q.pool === 'Scenario') return 'Scenario — Multiple Choice';
   if (q.pool === 'Values' || q.pool === 'SecondaryValues') return 'Values';
   if (q.pool === 'Applied') return 'Applied';
   if (q.pool === 'Complex') return 'Complex';
-  return 'MCQ';
+  return 'Multiple Choice Question';
 }
 function renderStatus() {
   const dot = document.getElementById('status-dot');
@@ -1362,14 +1363,15 @@ const Practice = {
     const badge = document.getElementById('prac-result');
     if (done) {
       const ok = ans === q.correct;
-      badge.innerHTML = `<div class="result-badge ${ok?'ok':'wrong'}">
-        <div class="result-icon ${ok?'ok':'wrong'}">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round">
-            ${ok ? '<path d="M20 6L9 17l-5-5"/>' : '<path d="M18 6L6 18M6 6l12 12"/>'}
-          </svg>
-        </div>
-        <div class="result-text ${ok?'ok':'wrong'}">${ok ? 'Correct' : 'Incorrect — correct answer is ' + LETTERS[q.correct]}</div>
-      </div>`;
+      const cls = ok ? 'ok' : 'wrong';
+      const icon = ok ? '<path d="M20 6L9 17l-5-5"/>' : '<path d="M18 6L6 18M6 6l12 12"/>';
+      const msg = ok ? 'Correct' : 'Incorrect — correct answer is ' + LETTERS[q.correct];
+      badge.innerHTML = '<div class="result-badge ' + cls + '">' +
+        '<div class="result-icon ' + cls + '">' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round">' + icon + '</svg>' +
+        '</div>' +
+        '<div class="result-text ' + cls + '">' + msg + '</div>' +
+      '</div>';
     } else {
       badge.innerHTML = '';
     }
