@@ -282,6 +282,21 @@ a { color: inherit; }
 .res-title { font-size: 14px; font-weight: 700; color: var(--reflect); margin-bottom: 4px; }
 .res-desc { font-size: 12px; color: var(--text-muted); line-height: 1.55; }
 
+/* ── PRACTICE SESSION COMPLETE ───────────────────────────────── */
+.session-complete { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 32px; text-align: center; }
+.session-ring { width: 110px; height: 110px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px; flex-shrink: 0; border: 5px solid var(--incorrect); }
+.session-ring.pass { border-color: var(--correct); }
+.session-ring-pct { font-family: var(--serif); font-size: 32px; font-weight: 700; line-height: 1; }
+.session-ring.pass .session-ring-pct { color: var(--correct); }
+.session-ring:not(.pass) .session-ring-pct { color: var(--incorrect); }
+.session-msg { font-size: 18px; font-weight: 700; color: var(--reflect); margin-bottom: 6px; }
+.session-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 28px; }
+.session-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px; }
+.btn-session-primary { background: var(--reflect); color: white; border: none; border-radius: 9px; padding: 13px 20px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--font); transition: background 0.14s; }
+.btn-session-primary:hover { background: var(--reflect-mid); }
+.btn-session-secondary { background: white; color: var(--reflect); border: 1.5px solid var(--border); border-radius: 9px; padding: 12px 20px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: all 0.14s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-session-secondary:hover { border-color: var(--reflect); background: #fdf5f0; }
+
 /* ── SETTINGS ─────────────────────────────────────────────────── */
 .settings-body { flex: 1; overflow-y: auto; padding: 28px 40px; background: var(--surface); }
 .settings-card { background: var(--white); border: 0.5px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 14px; overflow: hidden; }
@@ -359,7 +374,7 @@ a { color: inherit; }
         <div class="sb-stat"><div class="sb-stat-label">Exams done</div><div class="sb-stat-val" id="sb-exams" style="color:var(--bloom)">0</div></div>
         <div class="sb-stat"><div class="sb-stat-label">Top score</div><div class="sb-stat-val" id="sb-best" style="color:var(--bloom)">—</div></div>
       </div>
-      <div id="sb-footer">Desktop v2.0<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
+      <div id="sb-footer">Desktop v3.0<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
     </aside>
 
     <!-- SCREENS -->
@@ -639,7 +654,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v2.0</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.0</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -663,8 +678,7 @@ const TABS = {
   values:          '415213895',
   applied:         '660144817',
   complex:         '536851474',
-  scenarioQ:       '963116215',
-  scenarioA:       '949499303'
+  scenarios:       '949499303'  // update GID if tab was recreated
 };
 const LETTERS = ['A','B','C','D','E'];
 
@@ -881,19 +895,18 @@ function renderStats() {
 }
 function renderScenario(q, titleId, bodyId, boxId) {
   const box = document.getElementById(boxId);
-  if (!q.scenario) { box.classList.add('hidden'); return; }
+  const narrative = (q.scenario || '').trim();
+  // If no narrative, hide the box — question text stands alone
+  if (!narrative) { box.classList.add('hidden'); return; }
   box.classList.remove('hidden');
-  // scenario_key is the label (e.g. "Marcus Westbridge"), scenario is the narrative body
   // Mobile app used "KEY  SCENARIO: body" format — handle both
-  const raw = q.scenario;
-  const splitMatch = raw.match(/^(.*?)\s{2,}SCENARIO:\s*(.+)$/s);
+  const splitMatch = narrative.match(/^(.*?)\s{2,}SCENARIO:\s*(.+)$/s);
   if (splitMatch) {
     document.getElementById(titleId).textContent = splitMatch[1].trim();
     document.getElementById(bodyId).textContent = splitMatch[2].trim();
   } else {
-    // Direct narrative storage (desktop format) — use scenario_key as label
     document.getElementById(titleId).textContent = q.scenario_key || q.topic || 'Scenario';
-    document.getElementById(bodyId).textContent = raw.trim();
+    document.getElementById(bodyId).textContent = narrative;
   }
 }
 
@@ -1057,65 +1070,37 @@ function parseComplexTab(rows) {
   }
 
 function parseScenarioTabs(qRows, aRows) {
-    // scenarioQ tab: col0=#, col1=ScenarioName, col2=Narrative
-    const narratives = {};
-    for (let i = 1; i < qRows.length; i++) {
-      const r = qRows[i];
-      if (!r[0] && !r[1]) continue;
-      // Try col1=key, col2=narrative first; fallback col0=key, col1=narrative
-      const key = (r[1]||'').trim() || (r[0]||'').trim();
-      const narrative = (r[2]||r[1]||'').trim();
-      if (key) narratives[key] = narrative;
-    }
-
-    // scenarioA tab — detect column layout from header row
-    // Common layouts:
-    //   A: #, ScenarioName, Question, OptA, OptB, OptC, OptD, CorrectLetter, CorrectAnswer, Expl  (q at r[2])
-    //   B: #, ScenarioName, ScenarioQ#, Question, OptA, OptB, OptC, OptD, CorrectLetter, CorrectAnswer, Expl (q at r[3])
-    // Detect by checking header
-    // Detect question column: scan first data row to find where question text appears
-    // r[1]=ScenarioName is confirmed. Try r[3] first (most common), then r[2].
-    let qOff = 3;
-    if (aRows.length > 1) {
-      const first = aRows[1];
-      const try3 = (first[3]||'').trim();
-      const try2 = (first[2]||'').trim();
-      // r[2] is question if it looks like a sentence (length > 20 and contains spaces)
-      // r[3] is question if r[2] looks like a Q-number (short, starts with Q or digit)
-      if (try2.length > 20 && try2.includes(' ') && !try2.match(/^[Qq]\d/)) {
-        qOff = 2;
-      } else {
-        qOff = 3;
-      }
-    }
-
+    // Scenarios tab — fixed column layout, no shifting:
+    // r[0]=#  r[1]=ScenarioName  r[2]=Narrative (may be empty)  r[3]=Question
+    // r[4]=OptA  r[5]=OptB  r[6]=OptC  r[7]=OptD
+    // r[8]=CorrectLetter  r[9]=CorrectAnswer  r[10]=Explanation
+    // Google Sheets CSV always preserves column positions — empty cells come
+    // through as empty strings, never shift adjacent columns.
     const qs = [];
     let idBase = 96000;
     for (let i = 1; i < aRows.length; i++) {
       const r = aRows[i];
-      const qText = (r[qOff]||'').trim();
+      const qText = (r[3]||'').trim();
       if (!qText) continue;
-
-      const o = qOff; // option offset follows question
       const scenarioKey = (r[1]||'').trim();
-      const narrative = narratives[scenarioKey] || '';
-
+      const narrative = (r[2]||'').trim();
       qs.push({
         id: idBase++,
         section: 'Scenario',
         pool: 'Scenario',
         type: 'Scenario',
         q: qText,
-        opts: [(r[o+1]||'').trim(),(r[o+2]||'').trim(),(r[o+3]||'').trim(),(r[o+4]||'').trim()],
-        correct: correctIndex((r[o+5]||'A').trim()),
+        opts: [(r[4]||'').trim(),(r[5]||'').trim(),(r[6]||'').trim(),(r[7]||'').trim()],
+        correct: correctIndex((r[8]||'A').trim()),
         topic: scenarioKey,
         scenario: narrative,
         scenario_key: scenarioKey,
-        expl: (r[o+7]||r[o+6]||'').trim()
+        expl: (r[10]||'').trim()
       });
     }
     return qs;
   }
+
 
 async function fetchTab(gid) {
     const timeout = (ms) => new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
@@ -1164,15 +1149,14 @@ async function loadQuestions() {
 
   try {
     setMsg('Loading questions from Google Sheets…');
-    const [std, tf, sv, val, app, cx, sqQ, sqA] = await Promise.all([
+    const [std, tf, sv, val, app, cx, sqA] = await Promise.all([
       fetchOne(TABS.standard),
       fetchOne(TABS.truefalse),
       fetchOne(TABS.secondaryvalues),
       fetchOne(TABS.values),
       fetchOne(TABS.applied),
       fetchOne(TABS.complex),
-      fetchOne(TABS.scenarioQ),
-      fetchOne(TABS.scenarioA)
+      fetchOne(TABS.scenarios)
     ]);
 
     const live = [
@@ -1182,7 +1166,7 @@ async function loadQuestions() {
       ...parseValuesTab(val),
       ...parseAppliedTab(app),
       ...parseComplexTab(cx),
-      ...parseScenarioTabs(sqQ, sqA)
+      ...parseScenarioTabs(null, sqA)
     ].filter(q => q && q.q && q.opts && q.opts.filter(Boolean).length >= 2);
 
     if (live.length < 50) {
@@ -1324,7 +1308,20 @@ const Practice = {
     this.idx = 0;
     this.answered = {};
     this.pending = null;
-    this.mistakes = []; // track wrong answers for redo
+    this.mistakes = [];
+    this._secTrack = {};
+    // Reset right panel in case it was showing session complete
+    const right = document.getElementById('prac-right');
+    if (right) right.innerHTML = \`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="ans-heading" id="prac-ans-heading" style="margin-bottom:0">Select the best answer</div>
+        <div style="font-size:10px;color:var(--text-faint)" id="kbd-hint">A–D or 1–4 · Enter to confirm · M to flag</div>
+      </div>
+      <div id="prac-opts"></div>
+      <button class="btn-confirm" id="prac-btn-confirm" onclick="Practice.confirm()" disabled>Confirm answer →</button>
+      <button class="btn-redo hidden" id="prac-btn-redo" onclick="Practice.redoMistakes()" style="margin-top:10px"></button>
+      <div id="prac-expl" class="expl-box hidden"><div class="expl-lbl">Explanation</div><div class="expl-body" id="prac-expl-body"></div></div>
+    \`;
     const redoBtn = document.getElementById('prac-btn-redo');
     if (redoBtn) redoBtn.classList.add('hidden');
     this.render();
@@ -1492,10 +1489,100 @@ const Practice = {
   },
 
   nav(dir) {
-    if (dir === 1 && this.idx === this.qs.length - 1) { App.go('home'); return; }
+    if (dir === 1 && this.idx === this.qs.length - 1) {
+      this.showComplete();
+      return;
+    }
     this.idx = Math.max(0, Math.min(this.qs.length - 1, this.idx + dir));
     this.pending = null;
     this.render();
+  },
+
+  showComplete() {
+    const correct = Object.values(this.answered).filter((ans, i) => {
+      const keys = Object.keys(this.answered);
+      return ans === this.qs[parseInt(keys[i])].correct;
+    }).length;
+    const total = this.qs.length;
+    const pct = Math.round((correct / total) * 100);
+    const pass = pct >= 75;
+    const msg = pct === 100 ? 'Perfect score!' :
+                pct >= 75  ? 'Great work! 🎉' :
+                pct >= 55  ? 'Keep practising!' : 'Early days — keep at it!';
+
+    // Left panel — update to show completion state
+    document.getElementById('prac-q').textContent = '';
+    document.getElementById('prac-tag').textContent = 'Session complete';
+    const scenBox = document.getElementById('prac-scenario');
+    if (scenBox) scenBox.classList.add('hidden');
+    document.getElementById('prac-result').innerHTML = '';
+    document.getElementById('prac-info').textContent = correct + ' / ' + total + ' correct';
+    document.getElementById('prac-btn-prev').disabled = true;
+    document.getElementById('prac-btn-next').disabled = true;
+    document.getElementById('prac-btn-next').textContent = 'Done';
+    document.getElementById('prac-btn-confirm').style.display = 'none';
+    document.getElementById('prac-expl').classList.add('hidden');
+    const redoBtn = document.getElementById('prac-btn-redo');
+    if (redoBtn) redoBtn.classList.add('hidden');
+
+    // Right panel — replace with session complete summary
+    const right = document.getElementById('prac-right');
+    right.innerHTML = \`<div class="session-complete">
+      <div class="session-ring \${pass ? 'pass' : ''}">
+        <div class="session-ring-pct">\${pct}%</div>
+      </div>
+      <div class="session-msg">\${msg}</div>
+      <div class="session-sub">\${correct} correct out of \${total} questions</div>
+      <div class="session-actions">
+        <button class="btn-session-primary" onclick="App.startPractice()">20 more questions →</button>
+        <button class="btn-session-secondary" onclick="Practice.showReview()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Review answers
+        </button>
+        <button class="btn-session-secondary" onclick="App.go('exam-setup')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          Take a timed exam
+        </button>
+        \${this.mistakes.length > 0 ? \`<button class="btn-session-secondary" onclick="Practice.redoMistakes()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+          Redo \${this.mistakes.length} mistake\${this.mistakes.length > 1 ? 's' : ''}
+        </button>\` : ''}
+      </div>
+    </div>\`;
+  },
+
+  showReview() {
+    // Rebuild right panel with review of answered questions
+    const letters = ['A','B','C','D'];
+    const right = document.getElementById('prac-right');
+    right.innerHTML = \`<div style="padding:0 0 16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="ans-heading" style="margin-bottom:0">Answer review</div>
+        <button class="btn-session-secondary" style="padding:6px 12px;font-size:12px" onclick="Practice.showComplete()">← Back</button>
+      </div>
+      \${this.qs.map((q, i) => {
+        const ans = this.answered[i];
+        const ok = ans === q.correct;
+        const skipped = ans === undefined;
+        const badge = skipped ? 'Skipped' : ok ? '✓ Correct' : '✗ Incorrect';
+        const badgeColor = skipped ? 'var(--text-muted)' : ok ? 'var(--correct)' : 'var(--incorrect)';
+        const opts = q.opts.map((opt, oi) => {
+          let cls = 'review-opt neutral';
+          if (oi === q.correct) cls = 'review-opt correct';
+          else if (oi === ans && !ok) cls = 'review-opt user-wrong';
+          return \`<div class="\${cls}"><span class="review-opt-lbl">\${letters[oi]}</span>\${esc(opt)}</div>\`;
+        }).join('');
+        const expl = q.expl ? \`<div class="review-expl">\${fmt(q.expl)}</div>\` : '';
+        return \`<div class="review-item">
+          <div class="review-item-head">
+            <span class="review-q-num">Q\${i+1}</span>
+            <span class="review-q-text">\${esc(q.q)}</span>
+            <span class="review-badge" style="color:\${badgeColor}">\${badge}</span>
+          </div>
+          <div class="review-item-body">\${opts}\${expl}</div>
+        </div>\`;
+      }).join('')}
+    </div>\`;
   },
 };
 
