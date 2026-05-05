@@ -374,7 +374,7 @@ a { color: inherit; }
         <div class="sb-stat"><div class="sb-stat-label">Exams done</div><div class="sb-stat-val" id="sb-exams" style="color:var(--bloom)">0</div></div>
         <div class="sb-stat"><div class="sb-stat-label">Top score</div><div class="sb-stat-val" id="sb-best" style="color:var(--bloom)">—</div></div>
       </div>
-      <div id="sb-footer">Desktop v3.11<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
+      <div id="sb-footer">Desktop v3.15<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
     </aside>
 
     <!-- SCREENS -->
@@ -655,7 +655,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.11</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.15</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -947,7 +947,7 @@ function parseStandardTab(rows) {
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
       if (!r[4] || r[4].trim() === '') continue;
-      // #, Section, Pool, Type, Question, OptA, OptB, OptC, OptD, CorrectLetter, CorrectAnswer, Explanation
+      // #, Section, Pool, Type, Question, OptA, OptB, OptC, OptD, CorrectLetter, Explanation
       qs.push({
         id: idBase++,
         section: (r[1]||'').trim(),
@@ -957,7 +957,7 @@ function parseStandardTab(rows) {
         opts: [(r[5]||'').trim(),(r[6]||'').trim(),(r[7]||'').trim(),(r[8]||'').trim()],
         correct: correctIndex((r[9]||'A').trim()),
         topic: (r[1]||'').trim(),
-        expl: (r[11]||'').trim()
+        expl: (r[10]||'').trim()
       });
     }
     return qs;
@@ -1020,7 +1020,7 @@ function parseValuesTab(rows) {
         opts: [(r[4]||'').trim(),(r[5]||'').trim(),(r[6]||'').trim(),(r[7]||'').trim()],
         correct: correctIndex((r[8]||'A').trim()),
         topic: (r[1]||'Code Values').trim(),
-        expl: (r[11]||r[10]||'').trim()
+        expl: (r[11]||'').trim()
       });
     }
     return qs;
@@ -1096,7 +1096,7 @@ function parseScenarioTabs(qRows, aRows) {
         topic: scenarioKey,
         scenario: narrative,
         scenario_key: scenarioKey,
-        expl: (r[11]||r[10]||'').trim()
+        expl: (r[11]||'').trim()
       });
     }
     return qs;
@@ -1424,11 +1424,13 @@ const Practice = {
 
     // Explanation
     const explBox = document.getElementById('prac-expl');
-    if (done && q.expl) {
-      explBox.classList.remove('hidden');
-      document.getElementById('prac-expl-body').innerHTML = fmt(q.expl);
-    } else {
-      explBox.classList.add('hidden');
+    if (explBox) {
+      if (done && q.expl) {
+        explBox.classList.remove('hidden');
+        document.getElementById('prac-expl-body').innerHTML = fmt(q.expl);
+      } else {
+        explBox.classList.add('hidden');
+      }
     }
   },
 
@@ -1470,7 +1472,7 @@ const Practice = {
         const redoBtn = document.getElementById('prac-btn-redo');
         if (redoBtn) {
           redoBtn.classList.remove('hidden');
-          redoBtn.textContent = `Redo my ${this.mistakes.length} mistake${this.mistakes.length > 1 ? 's' : ''} →`;
+          redoBtn.textContent = 'Redo my ' + this.mistakes.length + ' mistake' + (this.mistakes.length > 1 ? 's' : '') + ' →';
         }
       }
       // Save section stats
