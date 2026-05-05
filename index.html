@@ -374,7 +374,7 @@ a { color: inherit; }
         <div class="sb-stat"><div class="sb-stat-label">Exams done</div><div class="sb-stat-val" id="sb-exams" style="color:var(--bloom)">0</div></div>
         <div class="sb-stat"><div class="sb-stat-label">Top score</div><div class="sb-stat-val" id="sb-best" style="color:var(--bloom)">—</div></div>
       </div>
-      <div id="sb-footer">Desktop v3.15<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
+      <div id="sb-footer">Desktop v3.16<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
     </aside>
 
     <!-- SCREENS -->
@@ -655,7 +655,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.15</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.16</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -1010,15 +1010,16 @@ function parseValuesTab(rows) {
     let idBase = 93000;
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
-      if (!r[3] || r[3].trim() === '') continue;
+      if (!r[4] || r[4].trim() === '') continue;
+      // #, Section, Pool, Type, Question, OptA, OptB, OptC, OptD, CorrectLetter, CorrectAnswer, Explanation
       qs.push({
         id: idBase++,
         section: (r[1]||'Code Values').trim(),
         pool: 'Values',
         type: 'Values',
-        q: (r[3]||'').trim(),
-        opts: [(r[4]||'').trim(),(r[5]||'').trim(),(r[6]||'').trim(),(r[7]||'').trim()],
-        correct: correctIndex((r[8]||'A').trim()),
+        q: (r[4]||'').trim(),
+        opts: [(r[5]||'').trim(),(r[6]||'').trim(),(r[7]||'').trim(),(r[8]||'').trim()],
+        correct: correctIndex((r[9]||'A').trim()),
         topic: (r[1]||'Code Values').trim(),
         expl: (r[11]||'').trim()
       });
