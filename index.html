@@ -1057,33 +1057,61 @@ function parseComplexTab(rows) {
   }
 
 function parseScenarioTabs(qRows, aRows) {
-    // Build scenario narrative lookup: key = Scenario name, value = narrative
+    // scenarioQ tab: col0=#, col1=ScenarioName, col2=Narrative
     const narratives = {};
     for (let i = 1; i < qRows.length; i++) {
       const r = qRows[i];
-      if (r[0] && r[1]) narratives[r[0].trim()] = r[1].trim();
+      if (!r[0] && !r[1]) continue;
+      // Try col1=key, col2=narrative first; fallback col0=key, col1=narrative
+      const key = (r[1]||'').trim() || (r[0]||'').trim();
+      const narrative = (r[2]||r[1]||'').trim();
+      if (key) narratives[key] = narrative;
     }
-    // Parse scenario answers
+
+    // scenarioA tab — detect column layout from header row
+    // Common layouts:
+    //   A: #, ScenarioName, Question, OptA, OptB, OptC, OptD, CorrectLetter, CorrectAnswer, Expl  (q at r[2])
+    //   B: #, ScenarioName, ScenarioQ#, Question, OptA, OptB, OptC, OptD, CorrectLetter, CorrectAnswer, Expl (q at r[3])
+    // Detect by checking header
+    // Detect question column: scan first data row to find where question text appears
+    // r[1]=ScenarioName is confirmed. Try r[3] first (most common), then r[2].
+    let qOff = 3;
+    if (aRows.length > 1) {
+      const first = aRows[1];
+      const try3 = (first[3]||'').trim();
+      const try2 = (first[2]||'').trim();
+      // r[2] is question if it looks like a sentence (length > 20 and contains spaces)
+      // r[3] is question if r[2] looks like a Q-number (short, starts with Q or digit)
+      if (try2.length > 20 && try2.includes(' ') && !try2.match(/^[Qq]\d/)) {
+        qOff = 2;
+      } else {
+        qOff = 3;
+      }
+    }
+
     const qs = [];
     let idBase = 96000;
     for (let i = 1; i < aRows.length; i++) {
       const r = aRows[i];
-      if (!r[2] || r[2].trim() === '') continue;
-      // #, ScenarioQ#, Question, OptA, OptB, OptC, OptD, CorrectLetter, CorrectAnswer, Explanation
+      const qText = (r[qOff]||'').trim();
+      if (!qText) continue;
+
+      const o = qOff; // option offset follows question
       const scenarioKey = (r[1]||'').trim();
       const narrative = narratives[scenarioKey] || '';
+
       qs.push({
         id: idBase++,
         section: 'Scenario',
         pool: 'Scenario',
         type: 'Scenario',
-        q: (r[2]||'').trim(),
-        opts: [(r[3]||'').trim(),(r[4]||'').trim(),(r[5]||'').trim(),(r[6]||'').trim()],
-        correct: correctIndex((r[7]||'A').trim()),
+        q: qText,
+        opts: [(r[o+1]||'').trim(),(r[o+2]||'').trim(),(r[o+3]||'').trim(),(r[o+4]||'').trim()],
+        correct: correctIndex((r[o+5]||'A').trim()),
         topic: scenarioKey,
         scenario: narrative,
         scenario_key: scenarioKey,
-        expl: (r[9]||'').trim()
+        expl: (r[o+7]||r[o+6]||'').trim()
       });
     }
     return qs;
