@@ -79,6 +79,13 @@ a { color: inherit; }
 .nav-btn-primary { background: var(--action); color: #fff; }
 .nav-btn-primary:hover { background: var(--action-light); }
 .nav-btn-ghost { background: rgba(255,255,255,0.09); color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.15); }
+.nav-btn-light { background: var(--white); color: var(--reflect); border: 1.5px solid var(--border); }
+.nav-btn-light:hover { background: var(--swift); border-color: var(--reflect); }
+.btn-flag { background: transparent; border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.45); border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--sans); display: flex; align-items: center; gap: 5px; transition: all 0.14s; }
+.btn-flag:hover { border-color: var(--bloom); color: var(--bloom); }
+.btn-flag.flagged { border-color: var(--bloom); color: var(--bloom); background: rgba(246,194,154,0.1); }
+.btn-redo { background: var(--white); color: var(--action); border: 1.5px solid var(--action); border-radius: 9px; padding: 12px 20px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--sans); transition: all 0.14s; width: 100%; }
+.btn-redo:hover { background: rgba(236,92,59,0.06); }
 .nav-btn-ghost:hover { background: rgba(255,255,255,0.15); }
 
 /* ── BODY SPLIT ───────────────────────────────────────────────── */
@@ -123,6 +130,11 @@ a { color: inherit; }
 .stat-card-sub { font-size: 11px; color: var(--text-faint); margin-top: 3px; }
 .prog-bar { height: 4px; background: var(--border-light); border-radius: 99px; overflow: hidden; margin-top: 10px; }
 .prog-fill { height: 100%; background: var(--action); border-radius: 99px; transition: width 0.4s; }
+.prog-fill.goal-reached { animation: prog-glow 1.8s ease-in-out infinite; }
+@keyframes prog-glow {
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(236,92,59,0.4); }
+  50% { box-shadow: 0 0 10px 3px rgba(236,92,59,0.75); }
+}
 .mode-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
 .mode-card { background: var(--white); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 20px; cursor: pointer; transition: all 0.14s; }
 .mode-card:hover { border-color: rgba(0,29,52,0.2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,29,52,0.07); }
@@ -388,7 +400,7 @@ a { color: inherit; }
       </div>
       <div id="sb-footer">
         <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.3);margin-bottom:5px;letter-spacing:0.06em;text-transform:uppercase;">Supporting Advisers</div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.24<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.32<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
       </div>
     </aside>
 
@@ -587,9 +599,10 @@ a { color: inherit; }
               </div>
               <div class="results-actions">
                 <button class="nav-btn nav-btn-primary" onclick="Exam.retry()">Try again</button>
-                <button class="nav-btn nav-btn-ghost" onclick="App.go('exam-setup')">New exam</button>
-                <button class="nav-btn nav-btn-ghost" onclick="Exam.review()">Review answers</button>
-                <button class="nav-btn nav-btn-ghost" onclick="Exam.exportPDF()">Download PDF</button>
+                <button class="nav-btn nav-btn-primary" onclick="Exam.practiceWeak()" style="background:var(--flourish)">Practice weak sections →</button>
+                <button class="nav-btn nav-btn-light" onclick="App.go('exam-setup')">New exam</button>
+                <button class="nav-btn nav-btn-light" onclick="Exam.review()">Review answers</button>
+                <button class="nav-btn nav-btn-light" onclick="Exam.exportPDF()">Download PDF</button>
               </div>
             </div>
           </div>
@@ -620,7 +633,7 @@ a { color: inherit; }
           <div class="sec-grid" id="sec-grid"></div>
           <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
             <button class="btn-confirm" id="sec-start-btn" style="max-width:300px;opacity:0.4" disabled onclick="App.startSectionPractice()">Start section practice →</button>
-            <button class="btn-redo" id="sec-flagged-btn" onclick="App.startFlagged()" style="display:none">Practice flagged questions (<span id="flagged-count">0</span>) →</button>
+            <button class="btn-redo" id="sec-flagged-btn" onclick="App.startFlagged()" style="display:none;max-width:300px">Practice flagged questions (<span id="flagged-count">0</span>) →</button>
           </div>
         </div>
       </div>
@@ -670,7 +683,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.24</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.32</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -853,7 +866,10 @@ function renderStats() {
   const today = document.getElementById('stat-today');
   if (today) today.innerHTML = daily + ' <span>/ 20</span>';
   const bar = document.getElementById('stat-today-bar');
-  if (bar) bar.style.width = pct + '%';
+  if (bar) {
+    bar.style.width = pct + '%';
+    bar.classList.toggle('goal-reached', daily >= 20);
+  }
 
   // Empty state
   const empty = document.getElementById('dash-empty-state');
@@ -1081,7 +1097,7 @@ function parseComplexTab(rows) {
         opts: [(r[4]||'').trim(),(r[5]||'').trim(),(r[6]||'').trim(),(r[7]||'').trim()],
         correct: correctIndex((r[8]||'A').trim()),
         topic: (r[2]||'Complex Questions').trim(),
-        expl: (r[9]||'').trim().trim()
+        expl: (r[10]||'').trim().trim()
       });
     }
     return qs;
@@ -1370,7 +1386,7 @@ const Practice = {
     if (flagBtn) {
       const isFlagged = Stats.isFlagged(qId);
       flagBtn.classList.toggle('flagged', isFlagged);
-      flagBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="${isFlagged ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> ${isFlagged ? 'Flagged' : 'Flag'}`;
+      flagBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="' + (isFlagged ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> ' + (isFlagged ? 'Flagged' : 'Flag');
     }
 
     // Result badge
@@ -1480,17 +1496,8 @@ const Practice = {
     this._secTrack[sec].total++;
     if (correct) this._secTrack[sec].correct++;
     this.pending = null;
-    // Show redo button when on last question and it's now answered
+    // Save section stats on last question
     if (this.idx === this.qs.length - 1) {
-      const allDone = this.qs.every((_, i) => this.answered[i] !== undefined);
-      if (allDone && this.mistakes.length > 0) {
-        const redoBtn = document.getElementById('prac-btn-redo');
-        if (redoBtn) {
-          redoBtn.classList.remove('hidden');
-          redoBtn.textContent = 'Redo my ' + this.mistakes.length + ' mistake' + (this.mistakes.length > 1 ? 's' : '') + ' →';
-        }
-      }
-      // Save section stats
       if (this._secTrack) Stats.recordSectionStats ? Stats.recordSectionStats(this._secTrack) : null;
     }
     renderStats();
@@ -1572,38 +1579,40 @@ const Practice = {
   },
 
   showReview() {
-    // Rebuild right panel with review of answered questions
     const letters = ['A','B','C','D'];
     const right = document.getElementById('prac-right');
-    right.innerHTML = `<div style="padding:0 0 16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div class="ans-heading" style="margin-bottom:0">Answer review</div>
-        <button class="btn-session-secondary" style="padding:6px 12px;font-size:12px" onclick="Practice.showComplete()">← Back</button>
-      </div>
-      ${this.qs.map((q, i) => {
-        const ans = this.answered[i];
-        const ok = ans === q.correct;
-        const skipped = ans === undefined;
-        const badge = skipped ? 'Skipped' : ok ? '✓ Correct' : '✗ Incorrect';
-        const badgeColor = skipped ? 'var(--text-muted)' : ok ? 'var(--correct)' : 'var(--incorrect)';
-        const opts = q.opts.map((opt, oi) => {
-          let cls = 'review-opt neutral';
-          if (oi === q.correct) cls = 'review-opt correct';
-          else if (oi === ans && !ok) cls = 'review-opt user-wrong';
-          return `<div class="${cls}"><span class="review-opt-lbl">${letters[oi]}</span>${esc(opt)}</div>`;
-        }).join('');
-        const expl = q.expl ? `<div class="review-expl">${fmt(q.expl)}</div>` : '';
-        return `<div class="review-item">
-          <div class="review-item-head">
-            <span class="review-q-num">Q${i+1}</span>
-            <span class="review-q-text">${esc(q.q)}</span>
-            <span class="review-badge" style="color:${badgeColor}">${badge}</span>
-          </div>
-          <div class="review-item-body">${opts}${expl}</div>
-        </div>`;
-      }).join('')}
-    </div>`;
+    let html = '<div style="padding:0 0 16px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+        '<div class="ans-heading" style="margin-bottom:0">Answer review</div>' +
+        '<button class="btn-session-secondary" style="padding:6px 12px;font-size:12px" onclick="Practice.showComplete();">← Back</button>' +
+      '</div>';
+    this.qs.forEach(function(q, i) {
+      const ans = Practice.answered[i];
+      const ok = ans === q.correct;
+      const skipped = ans === undefined;
+      const badge = skipped ? 'Skipped' : ok ? '✓ Correct' : '✗ Incorrect';
+      const badgeColor = skipped ? 'var(--text-muted)' : ok ? 'var(--correct)' : 'var(--incorrect)';
+      let opts = '';
+      q.opts.forEach(function(opt, oi) {
+        let cls = 'review-opt neutral';
+        if (oi === q.correct) cls = 'review-opt correct';
+        else if (oi === ans && !ok) cls = 'review-opt user-wrong';
+        opts += '<div class="' + cls + '"><span class="review-opt-lbl">' + letters[oi] + '</span>' + esc(opt) + '</div>';
+      });
+      const expl = q.expl ? '<div class="review-expl">' + fmt(q.expl) + '</div>' : '';
+      html += '<div class="review-item">' +
+        '<div class="review-item-head">' +
+          '<span class="review-q-num">Q' + (i+1) + '</span>' +
+          '<span class="review-q-text">' + esc(q.q) + '</span>' +
+          '<span class="review-badge" style="color:' + badgeColor + '">' + badge + '</span>' +
+        '</div>' +
+        '<div class="review-item-body">' + opts + expl + '</div>' +
+      '</div>';
+    });
+    html += '</div>';
+    right.innerHTML = html;
   },
+
 };
 
 // ── EXAM MODULE ───────────────────────────────────────────────────
@@ -1818,6 +1827,52 @@ const Exam = {
       </div>`;
     }).join('');
     App.go('review');
+  },
+
+  practiceWeak() {
+    if (!this.resultData) return;
+    // Build list of sections the user got wrong
+    const tMap = {};
+    this.resultData.qs.forEach(q => {
+      if (q.userAnswer !== q.correct) {
+        const sec = q.section || q.topic || '';
+        if (sec) tMap[sec] = (tMap[sec] || 0) + 1;
+      }
+    });
+    // Sort by most wrong, take top 3
+    const weakSections = Object.entries(tMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([sec]) => sec);
+
+    if (!weakSections.length) { App.go('sections'); return; }
+
+    // Navigate to sections screen and pre-select the weak ones
+    App.go('sections');
+
+    // Reset all chips first
+    document.querySelectorAll('.sec-chip').forEach(el => el.classList.remove('selected'));
+
+    // Match and select chips whose name overlaps with weak sections
+    document.querySelectorAll('.sec-chip').forEach(el => {
+      const chipName = (el.dataset.section || '').toLowerCase();
+      const matches = weakSections.some(sec => {
+        const s = sec.toLowerCase();
+        return chipName.includes(s) || s.includes(chipName) ||
+               chipName.split(' ').some(w => w.length > 3 && s.includes(w));
+      });
+      if (matches) el.classList.add('selected');
+    });
+
+    // Update the start button
+    const selected = document.querySelectorAll('.sec-chip.selected').length;
+    const btn = document.getElementById('sec-start-btn');
+    if (btn && selected > 0) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      btn.textContent = 'Start — ' + selected + ' section' + (selected > 1 ? 's' : '') + ' selected →';
+    }
   },
 
   exportPDF() {
