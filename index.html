@@ -374,7 +374,7 @@ a { color: inherit; }
         <div class="sb-stat"><div class="sb-stat-label">Exams done</div><div class="sb-stat-val" id="sb-exams" style="color:var(--bloom)">0</div></div>
         <div class="sb-stat"><div class="sb-stat-label">Top score</div><div class="sb-stat-val" id="sb-best" style="color:var(--bloom)">—</div></div>
       </div>
-      <div id="sb-footer">Desktop v3.18<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
+      <div id="sb-footer">Desktop v3.19<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
     </aside>
 
     <!-- SCREENS -->
@@ -655,7 +655,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.18</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.19</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -1073,17 +1073,15 @@ function parseComplexTab(rows) {
   }
 
 function parseScenarioTabs(qRows, aRows) {
-    // Scenarios tab — fixed column layout, no shifting:
-    // r[0]=#  r[1]=ScenarioName  r[2]=Narrative (may be empty)  r[3]=Question
-    // r[4]=OptA  r[5]=OptB  r[6]=OptC  r[7]=OptD
-    // r[8]=CorrectLetter  r[9]=CorrectAnswer  r[10]=CorrectAnswerText  r[11]=Explanation
-    // Google Sheets CSV always preserves column positions — empty cells come
-    // through as empty strings, never shift adjacent columns.
+    // Scenarios tab layout:
+    // r[0]=# r[1]=ScenarioName r[2]=Narrative(C) r[3]=?(D) r[4]=Question(E)
+    // r[5]=OptA(F) r[6]=OptB(G) r[7]=OptC(H) r[8]=OptD(I)
+    // r[9]=CorrectLetter(J) r[10]=CorrectAnswer(K) r[11]=Explanation(L)
     const qs = [];
     let idBase = 96000;
     for (let i = 1; i < aRows.length; i++) {
       const r = aRows[i];
-      const qText = (r[3]||'').trim();
+      const qText = (r[4]||'').trim();
       if (!qText) continue;
       const scenarioKey = (r[1]||'').trim();
       const narrative = (r[2]||'').trim();
@@ -1093,8 +1091,8 @@ function parseScenarioTabs(qRows, aRows) {
         pool: 'Scenario',
         type: 'Scenario',
         q: qText,
-        opts: [(r[4]||'').trim(),(r[5]||'').trim(),(r[6]||'').trim(),(r[7]||'').trim()],
-        correct: correctIndex((r[8]||'A').trim()),
+        opts: [(r[5]||'').trim(),(r[6]||'').trim(),(r[7]||'').trim(),(r[8]||'').trim()],
+        correct: correctIndex((r[9]||'A').trim()),
         topic: scenarioKey,
         scenario: narrative,
         scenario_key: scenarioKey,
