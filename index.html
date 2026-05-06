@@ -400,7 +400,7 @@ a { color: inherit; }
       </div>
       <div id="sb-footer">
         <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.3);margin-bottom:5px;letter-spacing:0.06em;text-transform:uppercase;">Supporting Advisers</div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.33<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.34<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
       </div>
     </aside>
 
@@ -633,7 +633,6 @@ a { color: inherit; }
           <div class="sec-grid" id="sec-grid"></div>
           <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
             <button class="btn-confirm" id="sec-start-btn" style="max-width:300px;opacity:0.4" disabled onclick="App.startSectionPractice()">Start section practice →</button>
-            <button class="btn-redo" id="sec-flagged-btn" onclick="App.startFlagged()" style="display:none;max-width:300px">Practice flagged questions (<span id="flagged-count">0</span>) →</button>
           </div>
         </div>
       </div>
@@ -683,7 +682,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.33</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.34</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -918,12 +917,8 @@ function renderStats() {
     }
   }
 
-  // Flagged count
+  // Flagged count (button removed from sections screen)
   const flagCount = Stats.getFlagged().length;
-  const flagBtn = document.getElementById('sec-flagged-btn');
-  const flagCountEl = document.getElementById('flagged-count');
-  if (flagBtn) flagBtn.style.display = flagCount > 0 ? '' : 'none';
-  if (flagCountEl) flagCountEl.textContent = flagCount;
 }
 function renderScenario(q, titleId, bodyId, boxId) {
   const box = document.getElementById(boxId);
