@@ -400,7 +400,7 @@ a { color: inherit; }
       </div>
       <div id="sb-footer">
         <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.3);margin-bottom:5px;letter-spacing:0.06em;text-transform:uppercase;">Supporting Advisers</div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.35<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.34<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
       </div>
     </aside>
 
@@ -682,7 +682,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.35</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.34</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -790,25 +790,11 @@ const Stats = {
     try {
       let flags = this.getFlagged();
       const idx = flags.indexOf(qId);
-      if (idx > -1) {
-        // Unflagging
-        flags.splice(idx, 1);
-        localStorage.setItem(this._fk, JSON.stringify(flags));
-        return false; // now unflagged
-      } else {
-        // Flagging — enforce 20 cap
-        if (flags.length >= 20) return 'cap'; // signal cap reached
-        flags.push(qId);
-        localStorage.setItem(this._fk, JSON.stringify(flags));
-        return true; // now flagged
-      }
-    } catch(e) { return false; }
-  },
-  unflag(qId) {
-    try {
-      let flags = this.getFlagged().filter(id => id !== qId);
+      if (idx > -1) flags.splice(idx, 1);
+      else flags.push(qId);
       localStorage.setItem(this._fk, JSON.stringify(flags));
-    } catch(e) {}
+      return idx === -1; // true = now flagged
+    } catch(e) { return false; }
   },
   isFlagged(qId) {
     return this.getFlagged().includes(qId);
@@ -1317,7 +1303,6 @@ const App = {
     document.getElementById('timer-wrap').classList.toggle('hidden', !inExam);
     document.getElementById('exam-qcounter').classList.toggle('hidden', !inExam);
     document.getElementById('btn-exit').classList.toggle('hidden', !['practice','exam','review'].includes(name));
-    if (name === 'sections') renderSectionChips();
   },
   back() { App.go(_prevScreen); },
   exitSession() {
@@ -1325,28 +1310,20 @@ const App = {
     App.go('home');
   },
   startPractice(sections) {
-    Practice._isFlaggedSession = false;
-    Practice._autoUnflagged = 0;
     Practice.init(buildPool(sections));
     App.go('practice');
   },
   startSectionPractice() {
     const selected = [...document.querySelectorAll('.sec-chip.selected')].map(el => el.dataset.section);
     if (!selected.length) return;
-    if (selected.includes('__flagged__')) {
-      App.startFlagged();
-    } else {
-      App.startPractice(selected);
-    }
+    App.startPractice(selected);
   },
   startFlagged() {
     const flags = Stats.getFlagged();
     if (!flags.length) return;
     const pool = Q.filter(q => flags.includes(q.id || q.q));
     if (!pool.length) return;
-    Practice._isFlaggedSession = true;
-    Practice._autoUnflagged = 0;
-    Practice.init(shuffle(pool).slice(0, 20));
+    Practice.init(shuffle(pool));
     App.go('practice');
   },
 };
@@ -1505,18 +1482,8 @@ const Practice = {
     const q = this.qs[this.idx];
     this.answered[this.idx] = this.pending;
     const correct = this.pending === q.correct;
-    if (correct) {
-      Stats.addDaily(1);
-      // Auto-unflag if this was a flagged question answered correctly
-      const qId = q.id || q.q;
-      if (Stats.isFlagged(qId)) {
-        Stats.unflag(qId);
-        // If we're in a flagged session, mark for removal
-        if (Practice._isFlaggedSession) Practice._autoUnflagged = (Practice._autoUnflagged || 0) + 1;
-      }
-    } else {
-      this.mistakes.push(q);
-    }
+    if (correct) Stats.addDaily(1);
+    else this.mistakes.push(q);
     // Track section stats
     const sec = q.section || 'General';
     if (!this._secTrack) this._secTrack = {};
@@ -1534,27 +1501,9 @@ const Practice = {
   toggleFlag() {
     const q = this.qs[this.idx];
     const qId = q.id || q.q;
-    const result = Stats.toggleFlag(qId);
-    if (result === 'cap') {
-      Practice.showFlagCap();
-      return;
-    }
+    Stats.toggleFlag(qId);
     renderStats();
     this.render();
-  },
-  showFlagCap() {
-    // Show a temporary toast message
-    let toast = document.getElementById('flag-cap-toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'flag-cap-toast';
-      toast.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--reflect);color:white;font-size:13px;font-weight:600;padding:12px 20px;border-radius:10px;border:1px solid var(--action);box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:9999;text-align:center;max-width:360px;line-height:1.5;';
-      toast.textContent = 'You've reached 20 flagged questions — unflag one before adding more.';
-      document.body.appendChild(toast);
-    }
-    toast.style.display = 'block';
-    clearTimeout(Practice._toastTimer);
-    Practice._toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 3500);
   },
   redoMistakes() {
     if (!this.mistakes.length) return;
@@ -1979,56 +1928,27 @@ const SECTIONS = [
 ];
 
 function initSections() {
-  renderSectionChips();
-}
-function renderSectionChips() {
-  const flags = Stats.getFlagged();
-  const flagCount = flags.length;
-  let html = SECTIONS.map(s =>
-    '<div class="sec-chip" data-section="' + esc(s.name) + '" onclick="toggleSection(this)">' +
-      '<div class="sec-chip-icon" style="background:' + s.color + '22;color:' + s.color + '">' +
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>' +
-      '</div>' +
-      '<div>' +
-        '<div class="sec-chip-name">' + esc(s.name) + '</div>' +
-        '<div class="sec-chip-meta">' + esc(s.meta) + '</div>' +
-      '</div>' +
-    '</div>'
+  document.getElementById('sec-grid').innerHTML = SECTIONS.map(s =>
+    `<div class="sec-chip" data-section="${esc(s.name)}" onclick="toggleSection(this)">
+      <div class="sec-chip-icon" style="background:${s.color}22;color:${s.color}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <div>
+        <div class="sec-chip-name">${esc(s.name)}</div>
+        <div class="sec-chip-meta">${esc(s.meta)}</div>
+      </div>
+    </div>`
   ).join('');
-  // Add flagged chip if user has flagged questions
-  if (flagCount > 0) {
-    html += '<div class="sec-chip" data-section="__flagged__" onclick="toggleSection(this)" style="border-color:var(--bloom);grid-column:1/-1">' +
-      '<div class="sec-chip-icon" style="background:rgba(246,194,154,0.2);color:var(--bloom)">' +
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15" stroke="currentColor" stroke-width="2"/></svg>' +
-      '</div>' +
-      '<div>' +
-        '<div class="sec-chip-name" style="color:var(--pluck)">Flagged Questions (' + flagCount + ')</div>' +
-        '<div class="sec-chip-meta">Your flagged questions — answered correctly to remove</div>' +
-      '</div>' +
-    '</div>';
-  }
-  document.getElementById('sec-grid').innerHTML = html;
 }
 
 function toggleSection(el) {
-  // If flagged chip selected, deselect all others and vice versa
-  const isFlaggedChip = el.dataset.section === '__flagged__';
-  if (isFlaggedChip) {
-    document.querySelectorAll('.sec-chip:not([data-section="__flagged__"])').forEach(c => c.classList.remove('selected'));
-  } else {
-    const flaggedChip = document.querySelector('.sec-chip[data-section="__flagged__"]');
-    if (flaggedChip) flaggedChip.classList.remove('selected');
-  }
   el.classList.toggle('selected');
   const count = document.querySelectorAll('.sec-chip.selected').length;
   const btn = document.getElementById('sec-start-btn');
   btn.disabled = count === 0;
   btn.style.opacity = count > 0 ? '1' : '0.4';
   btn.style.cursor = count > 0 ? 'pointer' : 'not-allowed';
-  const isFlagged = document.querySelector('.sec-chip[data-section="__flagged__"].selected');
-  btn.textContent = isFlagged ? 'Practice flagged questions →' :
-    count > 0 ? 'Start — ' + count + ' section' + (count > 1 ? 's' : '') + ' selected →' :
-    'Start section practice →';
+  btn.textContent = count > 0 ? `Start — ${count} section${count > 1 ? 's' : ''} selected →` : 'Start section practice →';
 }
 
 // ── RESOURCES ─────────────────────────────────────────────────────
