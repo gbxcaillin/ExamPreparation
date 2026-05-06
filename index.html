@@ -54,14 +54,17 @@ a { color: inherit; }
 
 /* ── TOPNAV ───────────────────────────────────────────────────── */
 #topnav {
-  height: 52px; flex-shrink: 0;
+  height: 64px; flex-shrink: 0;
   background: var(--reflect);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 2px solid var(--action);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 20px; gap: 16px;
+  padding: 0 24px; gap: 16px;
 }
-.nav-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.nav-brand img { height: 26px; width: auto; display: block; }
+.nav-brand { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.nav-brand img { height: 32px; width: auto; display: block; }
+.nav-brand-divider-wrap { display: flex; flex-direction: column; gap: 2px; padding-left: 4px; border-left: 1px solid rgba(236,92,59,0.35); }
+.nav-app-title { font-size: 13px; font-weight: 700; color: white; letter-spacing: 0.02em; line-height: 1.2; }
+.nav-app-tagline { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 0.06em; font-style: italic; }
 .nav-divider { width: 1px; height: 20px; background: rgba(236,92,59,0.45); flex-shrink: 0; }
 #nav-screen-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.55); letter-spacing: 0.04em; }
 .nav-right { display: flex; align-items: center; gap: 14px; }
@@ -321,8 +324,13 @@ a { color: inherit; }
     <div class="nav-brand">
       <!-- Logo injected by JS from base64 -->
       <div id="nav-logo-wrap"></div>
-      <div class="nav-divider"></div>
-      <span id="nav-screen-title">Financial Adviser Exam Trainer</span>
+      <div class="nav-brand-divider-wrap">
+        <div class="nav-app-title">Financial Adviser Exam Trainer</div>
+        <div class="nav-app-tagline">Clever investing, made easy — Supporting advisers since 1996</div>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;padding-left:20px">
+      <span id="nav-screen-title" style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.35);letter-spacing:0.04em"></span>
     </div>
     <div class="nav-right">
       <div class="nav-status">
@@ -345,6 +353,10 @@ a { color: inherit; }
 
     <!-- SIDEBAR -->
     <aside id="sidebar">
+      <div style="padding:16px 16px 12px;border-bottom:1px solid rgba(255,255,255,0.06)">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.2);margin-bottom:2px">For financial advisers</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:1.5;">FASEA Ethics &amp; Compliance<br>Exam Preparation</div>
+      </div>
       <div class="sb-group">
         <div class="sb-heading">Study modes</div>
         <div class="sb-item active" id="sb-home" onclick="App.go('home')">
@@ -374,7 +386,10 @@ a { color: inherit; }
         <div class="sb-stat"><div class="sb-stat-label">Exams done</div><div class="sb-stat-val" id="sb-exams" style="color:var(--bloom)">0</div></div>
         <div class="sb-stat"><div class="sb-stat-label">Top score</div><div class="sb-stat-val" id="sb-best" style="color:var(--bloom)">—</div></div>
       </div>
-      <div id="sb-footer">Desktop v3.19<br>© GBX PS Pty Ltd<br>Clime Exam Trainer</div>
+      <div id="sb-footer">
+        <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.3);margin-bottom:5px;letter-spacing:0.06em;text-transform:uppercase;">Supporting Advisers</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.22<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
+      </div>
     </aside>
 
     <!-- SCREENS -->
@@ -655,7 +670,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.19</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.22</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
