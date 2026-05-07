@@ -397,7 +397,7 @@ a { color: inherit; }
       </div>
       <div id="sb-footer">
         <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.45);margin-bottom:5px;letter-spacing:0.06em;text-transform:uppercase;">Supporting Advisers</div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.35<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.36<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
       </div>
     </aside>
 
@@ -676,7 +676,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.35</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.36</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -899,16 +899,22 @@ function renderStats() {
 function renderScenario(q, titleId, bodyId, boxId) {
   const box = document.getElementById(boxId);
   const narrative = (q.scenario || '').trim();
-  // If no narrative, hide the box — question text stands alone
   if (!narrative) { box.classList.add('hidden'); return; }
   box.classList.remove('hidden');
-  // Mobile app used "KEY  SCENARIO: body" format — handle both
+  const key = q.scenario_key || q.topic || 'Scenario';
+  // If this is a continued scenario question, show compact header only
+  if (q._scenarioContinued) {
+    document.getElementById(titleId).textContent = key + ' — continued';
+    document.getElementById(bodyId).textContent = '';
+    return;
+  }
+  // First question in scenario — show full narrative
   const splitMatch = narrative.match(/^(.*?)\s{2,}SCENARIO:\s*(.+)$/s);
   if (splitMatch) {
     document.getElementById(titleId).textContent = splitMatch[1].trim();
     document.getElementById(bodyId).textContent = splitMatch[2].trim();
   } else {
-    document.getElementById(titleId).textContent = q.scenario_key || q.topic || 'Scenario';
+    document.getElementById(titleId).textContent = key;
     document.getElementById(bodyId).textContent = narrative;
   }
 }
@@ -1240,6 +1246,83 @@ function buildPool(sectionNames) {
   return shuffle(pool.length >= 5 ? pool : shuffle(Q));
 }
 
+// ── SCENARIO-AWARE SESSION BUILDER ───────────────────────────────
+// Builds a session of exactly `size` questions, keeping scenario
+// groups intact. Non-scenario questions fill remaining slots.
+function buildSession(pool, size) {
+  // Separate scenario questions (grouped by key) from standalone questions
+  const scenarioGroups = {};
+  const standalone = [];
+
+  pool.forEach(q => {
+    if (q.pool === 'Scenario' && q.scenario_key) {
+      if (!scenarioGroups[q.scenario_key]) scenarioGroups[q.scenario_key] = [];
+      scenarioGroups[q.scenario_key].push(q);
+    } else {
+      standalone.push(q);
+    }
+  });
+
+  // Shuffle standalone questions and scenario group keys
+  const shuffledStandalone = shuffle(standalone);
+  const groupKeys = shuffle(Object.keys(scenarioGroups));
+
+  const session = [];
+  let standaloneIdx = 0;
+  let groupIdx = 0;
+
+  while (session.length < size) {
+    const remaining = size - session.length;
+
+    // Decide whether to insert a scenario group or standalone question
+    // roughly 1-in-4 chance of picking a scenario group if available
+    const useScenario = groupIdx < groupKeys.length &&
+      (standaloneIdx >= shuffledStandalone.length || Math.random() < 0.25);
+
+    if (useScenario) {
+      const group = scenarioGroups[groupKeys[groupIdx]];
+      groupIdx++;
+      // Only add the group if it fits (or we're near the end and need to fill)
+      if (group.length <= remaining) {
+        // Mark first question with the narrative, suppress on subsequent
+        group.forEach((q, i) => {
+          const qCopy = Object.assign({}, q);
+          if (i > 0) {
+            // Subsequent questions in same scenario — keep narrative but mark as continued
+            qCopy._scenarioContinued = true;
+          }
+          session.push(qCopy);
+        });
+      } else if (remaining <= 3 && standaloneIdx < shuffledStandalone.length) {
+        // Group too big to fit — use standalone instead
+        session.push(shuffledStandalone[standaloneIdx++]);
+      } else if (group.length <= remaining) {
+        group.forEach(q => session.push(Object.assign({}, q)));
+      }
+      // If group still doesn't fit, skip it and try standalone
+      if (standaloneIdx < shuffledStandalone.length && session.length < size) {
+        // will be picked up next iteration
+      }
+    } else if (standaloneIdx < shuffledStandalone.length) {
+      session.push(shuffledStandalone[standaloneIdx++]);
+    } else if (groupIdx < groupKeys.length) {
+      // No more standalone — use scenario groups to fill
+      const group = scenarioGroups[groupKeys[groupIdx]];
+      groupIdx++;
+      const take = Math.min(group.length, remaining);
+      group.slice(0, take).forEach((q, i) => {
+        const qCopy = Object.assign({}, q);
+        if (i > 0) qCopy._scenarioContinued = true;
+        session.push(qCopy);
+      });
+    } else {
+      break; // pool exhausted
+    }
+  }
+
+  return session.slice(0, size);
+}
+
 // ── APP ROUTER ────────────────────────────────────────────────────
 const SCREEN_TITLES = {
   home: 'Financial Adviser Exam Trainer',
@@ -1302,7 +1385,7 @@ const Practice = {
   qs: [], idx: 0, answered: {}, pending: null,
 
   init(pool) {
-    this.qs = pool.slice(0, 20);
+    this.qs = buildSession(pool, 20);
     this.idx = 0;
     this.answered = {};
     this.pending = null;
@@ -1581,7 +1664,7 @@ const Exam = {
   },
 
   start() {
-    this.qs = shuffle(Q).slice(0, this.qty);
+    this.qs = buildSession(Q, this.qty);
     this.answers = new Array(this.qs.length).fill(null);
     this.idx = 0;
     this.tleft = this.mins * 60;
