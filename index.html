@@ -397,7 +397,7 @@ a { color: inherit; }
       </div>
       <div id="sb-footer">
         <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.45);margin-bottom:5px;letter-spacing:0.06em;text-transform:uppercase;">Supporting Advisers</div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.36<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.38<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
       </div>
     </aside>
 
@@ -676,7 +676,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.36</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.38</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -902,13 +902,7 @@ function renderScenario(q, titleId, bodyId, boxId) {
   if (!narrative) { box.classList.add('hidden'); return; }
   box.classList.remove('hidden');
   const key = q.scenario_key || q.topic || 'Scenario';
-  // If this is a continued scenario question, show compact header only
-  if (q._scenarioContinued) {
-    document.getElementById(titleId).textContent = key + ' — continued';
-    document.getElementById(bodyId).textContent = '';
-    return;
-  }
-  // First question in scenario — show full narrative
+  // Always show full narrative — even on continued scenario questions
   const splitMatch = narrative.match(/^(.*?)\s{2,}SCENARIO:\s*(.+)$/s);
   if (splitMatch) {
     document.getElementById(titleId).textContent = splitMatch[1].trim();
@@ -1284,12 +1278,15 @@ function buildSession(pool, size) {
       groupIdx++;
       // Only add the group if it fits (or we're near the end and need to fill)
       if (group.length <= remaining) {
-        // Mark first question with the narrative, suppress on subsequent
+        // Ensure all questions in the group have the narrative from the first question
+        const groupNarrative = group[0].scenario || '';
+        const groupKey = group[0].scenario_key || '';
         group.forEach((q, i) => {
           const qCopy = Object.assign({}, q);
-          if (i > 0) {
-            // Subsequent questions in same scenario — keep narrative but mark as continued
-            qCopy._scenarioContinued = true;
+          // If subsequent question has no narrative, inherit from first
+          if (i > 0 && !qCopy.scenario) {
+            qCopy.scenario = groupNarrative;
+            qCopy.scenario_key = groupKey;
           }
           session.push(qCopy);
         });
@@ -1310,9 +1307,14 @@ function buildSession(pool, size) {
       const group = scenarioGroups[groupKeys[groupIdx]];
       groupIdx++;
       const take = Math.min(group.length, remaining);
+      const fallbackNarrative = group[0].scenario || '';
+      const fallbackKey = group[0].scenario_key || '';
       group.slice(0, take).forEach((q, i) => {
         const qCopy = Object.assign({}, q);
-        if (i > 0) qCopy._scenarioContinued = true;
+        if (i > 0 && !qCopy.scenario) {
+          qCopy.scenario = fallbackNarrative;
+          qCopy.scenario_key = fallbackKey;
+        }
         session.push(qCopy);
       });
     } else {
