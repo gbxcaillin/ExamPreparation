@@ -81,9 +81,6 @@ a { color: inherit; }
 .nav-btn-ghost { background: rgba(255,255,255,0.09); color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.15); }
 .nav-btn-light { background: var(--white); color: var(--reflect); border: 1.5px solid var(--border); }
 .nav-btn-light:hover { background: var(--swift); border-color: var(--reflect); }
-.btn-flag { background: transparent; border: 1px solid rgba(255,255,255,0.18); color: rgba(255,255,255,0.45); border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--sans); display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.14s; width: 90px; flex-shrink: 0; }
-.btn-flag:hover { border-color: var(--bloom); color: var(--bloom); }
-.btn-flag.flagged { border-color: var(--bloom); color: var(--bloom); background: rgba(246,194,154,0.1); }
 .btn-redo { background: var(--white); color: var(--action); border: 1.5px solid var(--action); border-radius: 9px; padding: 12px 20px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--sans); transition: all 0.14s; width: 100%; }
 .btn-redo:hover { background: rgba(236,92,59,0.06); }
 .nav-btn-ghost:hover { background: rgba(255,255,255,0.15); }
@@ -497,10 +494,7 @@ a { color: inherit; }
               <button class="btn-prev" id="prac-btn-prev" onclick="Practice.nav(-1)">← Previous</button>
               <div style="display:flex;align-items:center;gap:10px">
                 <div class="q-footer-info" id="prac-info"></div>
-                <button class="btn-flag" id="prac-btn-flag" onclick="Practice.toggleFlag()">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-                  Flag
-                </button>
+
               </div>
               <button class="btn-next" id="prac-btn-next" onclick="Practice.nav(1)" disabled>Next →</button>
             </div>
@@ -508,7 +502,7 @@ a { color: inherit; }
           <div class="split-right" id="prac-right">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
               <div class="ans-heading" id="prac-ans-heading" style="margin-bottom:0">Select the best answer</div>
-              <div style="font-size:10px;color:var(--text-faint)" id="kbd-hint">A–D or 1–4 · Enter to confirm · M to flag</div>
+              <div style="font-size:10px;color:var(--text-faint)" id="kbd-hint">A–D or 1–4 · Enter to confirm</div>
             </div>
             <div id="prac-opts"></div>
             <button class="btn-confirm" id="prac-btn-confirm" onclick="Practice.confirm()" disabled>Confirm answer →</button>
@@ -719,7 +713,6 @@ const Stats = {
   _k: 'clime_desktop_stats',
   _dk: 'clime_desktop_daily',
   _hk: 'clime_desktop_history',
-  _fk: 'clime_desktop_flagged',
   _sk: 'clime_desktop_sections',
   load() {
     try { return JSON.parse(localStorage.getItem(this._k)) || {}; } catch(e) { return {}; }
@@ -782,23 +775,7 @@ const Stats = {
   getSectionStats() {
     try { return JSON.parse(localStorage.getItem(this._sk)) || {}; } catch(e) { return {}; }
   },
-  // Flagged questions
-  getFlagged() {
-    try { return JSON.parse(localStorage.getItem(this._fk)) || []; } catch(e) { return []; }
-  },
-  toggleFlag(qId) {
-    try {
-      let flags = this.getFlagged();
-      const idx = flags.indexOf(qId);
-      if (idx > -1) flags.splice(idx, 1);
-      else flags.push(qId);
-      localStorage.setItem(this._fk, JSON.stringify(flags));
-      return idx === -1; // true = now flagged
-    } catch(e) { return false; }
-  },
-  isFlagged(qId) {
-    return this.getFlagged().includes(qId);
-  }
+
 };
 
 // ── HELPERS ───────────────────────────────────────────────────────
@@ -917,8 +894,7 @@ function renderStats() {
     }
   }
 
-  // Flagged count (button removed from sections screen)
-  const flagCount = Stats.getFlagged().length;
+
 }
 function renderScenario(q, titleId, bodyId, boxId) {
   const box = document.getElementById(boxId);
@@ -1318,14 +1294,7 @@ const App = {
     if (!selected.length) return;
     App.startPractice(selected);
   },
-  startFlagged() {
-    const flags = Stats.getFlagged();
-    if (!flags.length) return;
-    const pool = Q.filter(q => flags.includes(q.id || q.q));
-    if (!pool.length) return;
-    Practice.init(shuffle(pool));
-    App.go('practice');
-  },
+
 };
 
 // ── PRACTICE MODULE ───────────────────────────────────────────────
@@ -1343,7 +1312,7 @@ const Practice = {
     const right = document.getElementById('prac-right');
     if (right) right.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
       '<div class="ans-heading" id="prac-ans-heading" style="margin-bottom:0">Select the best answer</div>' +
-      '<div style="font-size:10px;color:var(--text-faint)" id="kbd-hint">A–D or 1–4 · Enter to confirm · M to flag</div>' +
+      '<div style="font-size:10px;color:var(--text-faint)" id="kbd-hint">A–D or 1–4 · Enter to confirm</div>' +
       '</div>' +
       '<div id="prac-opts"></div>' +
       '<button class="btn-confirm" id="prac-btn-confirm" onclick="Practice.confirm()" disabled>Confirm answer →</button>' +
@@ -1375,14 +1344,7 @@ const Practice = {
     const nb = document.getElementById('prac-btn-next');
     nb.disabled = !done;
     nb.textContent = this.idx === this.qs.length - 1 ? 'Finish →' : 'Next →';
-    // Flag button
-    const qId = q.id || q.q;
-    const flagBtn = document.getElementById('prac-btn-flag');
-    if (flagBtn) {
-      const isFlagged = Stats.isFlagged(qId);
-      flagBtn.classList.toggle('flagged', isFlagged);
-      flagBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="' + (isFlagged ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg> ' + (isFlagged ? 'Flagged' : 'Flag');
-    }
+
 
     // Result badge
     const badge = document.getElementById('prac-result');
@@ -1498,13 +1460,7 @@ const Practice = {
     renderStats();
     this.render();
   },
-  toggleFlag() {
-    const q = this.qs[this.idx];
-    const qId = q.id || q.q;
-    Stats.toggleFlag(qId);
-    renderStats();
-    this.render();
-  },
+
   redoMistakes() {
     if (!this.mistakes.length) return;
     this.init(shuffle([...this.mistakes]));
@@ -2061,7 +2017,6 @@ document.addEventListener('keydown', (e) => {
     }
     if (e.key === 'ArrowRight' && done) { e.preventDefault(); Practice.nav(1); }
     if (e.key === 'ArrowLeft') { e.preventDefault(); Practice.nav(-1); }
-    if (e.key === 'm' || e.key === 'M') { e.preventDefault(); Practice.toggleFlag(); }
   }
 
   if (id === 'screen-exam') {
