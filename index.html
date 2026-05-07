@@ -397,7 +397,7 @@ a { color: inherit; }
       </div>
       <div id="sb-footer">
         <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.45);margin-bottom:5px;letter-spacing:0.06em;text-transform:uppercase;">Supporting Advisers</div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.38<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.39<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
       </div>
     </aside>
 
@@ -676,7 +676,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.38</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.39</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -1325,6 +1325,67 @@ function buildSession(pool, size) {
   return session.slice(0, size);
 }
 
+// ── EXAM SESSION BUILDER (guaranteed scenario minimums) ──────────
+const EXAM_SCENARIO_MINIMUMS = { 10: 1, 20: 2, 40: 3, 80: 5 };
+
+function buildExamSession(pool, size) {
+  const minScenarios = EXAM_SCENARIO_MINIMUMS[size] || 1;
+
+  // Separate scenario groups from standalone questions
+  const scenarioGroups = {};
+  const standalone = [];
+  pool.forEach(q => {
+    if (q.pool === 'Scenario' && q.scenario_key) {
+      if (!scenarioGroups[q.scenario_key]) scenarioGroups[q.scenario_key] = [];
+      scenarioGroups[q.scenario_key].push(q);
+    } else {
+      standalone.push(q);
+    }
+  });
+
+  const groupKeys = shuffle(Object.keys(scenarioGroups));
+  const shuffledStandalone = shuffle(standalone);
+
+  // Step 1: Pick guaranteed scenario groups
+  const guaranteedGroups = [];
+  let slotsUsed = 0;
+  for (let i = 0; i < groupKeys.length && guaranteedGroups.length < minScenarios; i++) {
+    const group = scenarioGroups[groupKeys[i]];
+    // Only pick groups that fit within the session size
+    if (slotsUsed + group.length <= size) {
+      guaranteedGroups.push(group);
+      slotsUsed += group.length;
+    }
+  }
+
+  // Step 2: Fill remaining slots with standalone questions
+  const remainingSlots = size - slotsUsed;
+  const standaloneSlice = shuffledStandalone.slice(0, remainingSlots);
+
+  // Step 3: Interleave — place scenario blocks at random positions
+  // Start with standalone questions, then splice in scenario groups
+  const session = [...standaloneSlice];
+
+  guaranteedGroups.forEach(group => {
+    // Pick a random insertion point (not mid-group)
+    const insertAt = Math.floor(Math.random() * (session.length + 1));
+    // Ensure narrative is inherited across group
+    const groupNarrative = group[0].scenario || '';
+    const groupKey = group[0].scenario_key || '';
+    const groupWithNarrative = group.map((q, i) => {
+      const qCopy = Object.assign({}, q);
+      if (i > 0 && !qCopy.scenario) {
+        qCopy.scenario = groupNarrative;
+        qCopy.scenario_key = groupKey;
+      }
+      return qCopy;
+    });
+    session.splice(insertAt, 0, ...groupWithNarrative);
+  });
+
+  return session.slice(0, size);
+}
+
 // ── APP ROUTER ────────────────────────────────────────────────────
 const SCREEN_TITLES = {
   home: 'Financial Adviser Exam Trainer',
@@ -1666,7 +1727,7 @@ const Exam = {
   },
 
   start() {
-    this.qs = buildSession(Q, this.qty);
+    this.qs = buildExamSession(Q, this.qty);
     this.answers = new Array(this.qs.length).fill(null);
     this.idx = 0;
     this.tleft = this.mins * 60;
