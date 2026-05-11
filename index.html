@@ -327,11 +327,21 @@ a { color: inherit; }
 /* ── SPLASH SCREEN ────────────────────────────────────────────── */
 #splash {
   position: fixed; inset: 0; z-index: 9999;
-  background: var(--reflect-dark, #000f1e);
+  background: var(--swift, #FFEFE5);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   padding: 28px 48px;
   transition: opacity 0.4s ease;
+}
+.splash-inner {
+  position: relative;
+  background: var(--reflect-dark, #000f1e);
+  border-radius: 18px;
+  padding: 48px 52px 44px;
+  display: flex; flex-direction: column;
+  align-items: center;
+  box-shadow: 0 24px 80px rgba(0,10,25,0.35), 0 0 0 1px rgba(0,10,25,0.08);
+  overflow: hidden;
 }
 #splash.hidden { opacity: 0; pointer-events: none; }
 .splash-bg-glow {
@@ -405,6 +415,7 @@ a { color: inherit; }
 </head>
 <body>
 <div id="splash">
+  <div class="splash-inner">
   <div class="splash-bg-glow"></div>
   <div class="splash-top-line"></div>
   <div class="splash-header">
@@ -442,6 +453,7 @@ a { color: inherit; }
       </div>
     </a>
   </div>
+  </div><!-- /.splash-inner -->
 </div>
 
 <div id="app">
