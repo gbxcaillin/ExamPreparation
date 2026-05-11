@@ -422,7 +422,7 @@ a { color: inherit; }
         <div class="splash-device-label">Desktop</div>
         <div class="splash-card-title">Full Desktop Version</div>
         <div class="splash-card-desc">Best on a laptop or large screen</div>
-        <div class="splash-card-btn">Use desktop version &rarr;</div>
+        <div class="splash-card-btn">Continue with desktop &rarr;</div>
       </div>
     </div>
     <div class="splash-divider">
@@ -519,7 +519,7 @@ a { color: inherit; }
       </div>
       <div id="sb-footer">
         <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.45);margin-bottom:5px;letter-spacing:0.06em;text-transform:uppercase;">Supporting Advisers</div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.46<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.43<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
       </div>
     </aside>
 
@@ -798,7 +798,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.46</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.43</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -812,100 +812,6 @@ a { color: inherit; }
 </div><!-- /app -->
 <script>
 'use strict';
-
-// ╔══════════════════════════════════════════════════════════════╗
-// ║  AWS COGNITO INTEGRATION — READY FOR CLIME DEV              ║
-// ║                                                              ║
-// ║  Steps to wire up:                                           ║
-// ║  1. Add AWS Amplify SDK to <head>:                           ║
-// ║     <script src="https://cdn.jsdelivr.net/npm/aws-amplify/   ║
-// ║     dist/aws-amplify.min.js"></script>                       ║
-// ║  2. Fill in COGNITO_CONFIG below                             ║
-// ║  3. Call Auth.init() — already wired into DOMContentLoaded   ║
-// ║  4. Replace Stats.save/load with Auth.saveExam/loadExams     ║
-// ║     for server-side exam persistence                         ║
-// ╚══════════════════════════════════════════════════════════════╝
-
-const COGNITO_CONFIG = {
-  region:           '',  // e.g. 'ap-southeast-2'
-  userPoolId:       '',  // e.g. 'ap-southeast-2_XXXXXXXXX'
-  userPoolClientId: '',  // e.g. '1234567890abcdefghij'
-  apiEndpoint:      '',  // e.g. 'https://api.yourdomain.com' (for saved exams)
-};
-
-// ── AUTH MODULE (stub — activate when Cognito config is filled) ──
-const Auth = {
-  _user: null,
-  _token: null, // JWT stored in memory only, never localStorage
-
-  isConfigured() {
-    return !!(COGNITO_CONFIG.userPoolId && COGNITO_CONFIG.userPoolClientId);
-  },
-
-  async init() {
-    if (!this.isConfigured()) return; // bypass until Cognito is set up
-    // TODO: Amplify.configure(COGNITO_CONFIG)
-    // TODO: check for existing session and restore _user/_token
-  },
-
-  async signIn(email, password) {
-    if (!this.isConfigured()) return { ok: true, mock: true };
-    // TODO: const user = await Auth.signIn(email, password);
-    // TODO: this._user = user; this._token = user.signInUserSession.idToken.jwtToken;
-  },
-
-  async signOut() {
-    this._user = null;
-    this._token = null;
-    if (!this.isConfigured()) return;
-    // TODO: await Auth.signOut();
-  },
-
-  async forgotPassword(email) {
-    if (!this.isConfigured()) return;
-    // TODO: await Auth.forgotPassword(email);
-    // Cognito sends reset email automatically
-  },
-
-  async confirmNewPassword(email, code, newPassword) {
-    if (!this.isConfigured()) return;
-    // TODO: await Auth.forgotPasswordSubmit(email, code, newPassword);
-  },
-
-  getToken() { return this._token; },
-  getUser()  { return this._user; },
-  isLoggedIn() { return !!this._user; },
-
-  // ── Saved exams API (wires to your API Gateway + Lambda) ──────
-  async saveExam(examData) {
-    if (!this.isConfigured() || !this._token) {
-      // Fallback: save to localStorage pre-Cognito
-      Stats.recordExam(examData.pct, examData.sectionResults);
-      return;
-    }
-    // TODO: await fetch(COGNITO_CONFIG.apiEndpoint + '/exams', {
-    //   method: 'POST',
-    //   headers: { Authorization: 'Bearer ' + this._token, 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(examData)
-    // });
-  },
-
-  async loadExams() {
-    if (!this.isConfigured() || !this._token) return null;
-    // TODO: const res = await fetch(COGNITO_CONFIG.apiEndpoint + '/exams', {
-    //   headers: { Authorization: 'Bearer ' + this._token }
-    // });
-    // TODO: return await res.json(); // array of up to 10 saved exams
-  },
-
-  async deleteExam(examId) {
-    if (!this.isConfigured() || !this._token) return;
-    // TODO: await fetch(COGNITO_CONFIG.apiEndpoint + '/exams/' + examId, {
-    //   method: 'DELETE',
-    //   headers: { Authorization: 'Bearer ' + this._token }
-    // });
-  }
-};
 
 // ── CONSTANTS ────────────────────────────────────────────────────
 const SHEET_ID = '11q3Fq35nPEKCXyVA8R3JJt8PJ72BL3pA';
@@ -1367,7 +1273,7 @@ async function loadQuestions() {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return parseCSV(await r.text());
     } catch(e) {
-      /* warn removed */
+      console.warn('Tab "' + name + '" failed:', e.message);
       return [];
     }
   };
@@ -1394,7 +1300,7 @@ async function loadQuestions() {
       ...parseScenarioTabs(null, sqA)
     ].filter(q => q && q.q && q.opts && q.opts.filter(Boolean).length >= 2);
 
-    /* log removed */
+    console.log('Questions loaded:', live.length);
 
     if (live.length < 50) {
       showErr(
@@ -1407,7 +1313,7 @@ async function loadQuestions() {
     LIVE = true;
     return true;
   } catch(e) {
-    /* error removed */
+    console.error('loadQuestions error:', e);
     showErr('Could not connect to question database', 'Error: ' + e.message);
     return false;
   }
@@ -1481,8 +1387,7 @@ function buildSession(pool, size) {
   let standaloneIdx = 0;
   let groupIdx = 0;
 
-  let _guard = 0;
-  while (session.length < size && _guard++ < size * 3) {
+  while (session.length < size) {
     const remaining = size - session.length;
 
     // Decide whether to insert a scenario group or standalone question
@@ -1631,8 +1536,6 @@ const App = {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const s = document.getElementById('screen-' + name);
     if (s) s.classList.add('active');
-    // Stop exam timer if navigating away from exam mid-session
-    if (_curScreen === 'exam' && name !== 'exam') Exam.stop();
     // Sidebar
     document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
     const sb = document.getElementById(SB_MAP[name]);
@@ -1842,11 +1745,10 @@ const Practice = {
   },
 
   showComplete() {
-    // answered keys are stringified numbers - compare explicitly
-    let correct = 0;
-    Object.entries(this.answered).forEach(([idx, ans]) => {
-      if (this.qs[parseInt(idx)] && ans === this.qs[parseInt(idx)].correct) correct++;
-    });
+    const correct = Object.values(this.answered).filter((ans, i) => {
+      const keys = Object.keys(this.answered);
+      return ans === this.qs[parseInt(keys[i])].correct;
+    }).length;
     const total = this.qs.length;
     const pct = Math.round((correct / total) * 100);
     const pass = pct >= 75;
@@ -2407,20 +2309,17 @@ document.addEventListener('keydown', (e) => {
 const Splash = {
   enter() {
     const splash = document.getElementById('splash');
-    if (!splash) return;
-    splash.style.opacity = '0';
-    splash.style.pointerEvents = 'none';
-    setTimeout(() => {
-      splash.style.display = 'none';
-    }, 400);
+    if (splash) {
+      splash.classList.add('hidden');
+      setTimeout(() => { splash.style.display = 'none'; }, 400);
+    }
   },
   enterDesktop() {
-    window.location.href = 'https://gbxcaillin.github.io/Adviserexam/desktop.html';
+    this.enter();
   }
 };
 
 window.addEventListener('DOMContentLoaded', async () => {
-  await Auth.init(); // Cognito — activates once COGNITO_CONFIG is filled
   Settings.restore();
   Stats.updateStreak();
   renderStats();
@@ -2433,7 +2332,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   renderStatus();
   renderStats();
-  // App navigates to 'home' only after user clicks the splash screen
+  App.go('home');
 });
 </script>
 </body>
