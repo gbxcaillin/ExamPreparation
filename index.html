@@ -422,7 +422,7 @@ a { color: inherit; }
         <div class="splash-device-label">Desktop</div>
         <div class="splash-card-title">Full Desktop Version</div>
         <div class="splash-card-desc">Best on a laptop or large screen</div>
-        <div class="splash-card-btn">Continue with desktop &rarr;</div>
+        <div class="splash-card-btn">Use desktop version &rarr;</div>
       </div>
     </div>
     <div class="splash-divider">
@@ -519,7 +519,7 @@ a { color: inherit; }
       </div>
       <div id="sb-footer">
         <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.45);margin-bottom:5px;letter-spacing:0.06em;text-transform:uppercase;">Supporting Advisers</div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.45<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.46<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
       </div>
     </aside>
 
@@ -798,7 +798,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.45</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.46</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -2407,10 +2407,12 @@ document.addEventListener('keydown', (e) => {
 const Splash = {
   enter() {
     const splash = document.getElementById('splash');
-    if (splash) {
-      splash.classList.add('hidden');
-      setTimeout(() => { splash.style.display = 'none'; }, 400);
-    }
+    if (!splash) return;
+    splash.style.opacity = '0';
+    splash.style.pointerEvents = 'none';
+    setTimeout(() => {
+      splash.style.display = 'none';
+    }, 400);
   },
   enterDesktop() {
     this.enter();
