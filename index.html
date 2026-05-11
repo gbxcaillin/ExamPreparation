@@ -2416,6 +2416,7 @@ const Splash = {
   },
   enterDesktop() {
     this.enter();
+    App.go('home');
   }
 };
 
@@ -2433,7 +2434,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   renderStatus();
   renderStats();
-  App.go('home');
+  // App navigates to 'home' only after user clicks the splash screen
 });
 </script>
 </body>
