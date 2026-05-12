@@ -1904,6 +1904,7 @@ const Exam = {
       sectionResults[sec].total++;
       if (q.userAnswer === q.correct) sectionResults[sec].correct++;
     });
+    Stats.addDaily(correct);
     Stats.recordExam(pct, sectionResults);
     renderStats();
 
