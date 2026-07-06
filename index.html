@@ -321,7 +321,12 @@ a { color: inherit; }
 .res-desc { font-size: 12px; color: var(--text-muted); line-height: 1.55; }
 
 /* ── PRACTICE SESSION COMPLETE ───────────────────────────────── */
-.session-complete { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 32px; text-align: center; }
+.session-complete { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 32px; text-align: center; overflow-y: auto; }
+.prac-weak-card { width: 100%; max-width: 320px; margin: 12px auto 0; background: white; border: 1.5px solid var(--border); border-radius: 9px; text-align: left; overflow: hidden; }
+.prac-weak-title { background: var(--reflect); color: white; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 9px 16px; }
+.prac-weak-body { padding: 4px 16px 0; }
+.prac-weak-go { display: block; width: 100%; background: var(--flourish); color: white; border: none; text-align: center; font-size: 13px; font-weight: 700; padding: 12px; cursor: pointer; font-family: var(--font); transition: opacity 0.14s; }
+.prac-weak-go:hover { opacity: 0.9; }
 .session-ring { width: 110px; height: 110px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px; flex-shrink: 0; border: 5px solid var(--incorrect); }
 .session-ring.pass { border-color: var(--correct); }
 .session-ring-pct { font-family: var(--serif); font-size: 32px; font-weight: 700; line-height: 1; }
@@ -453,7 +458,7 @@ a { color: inherit; }
       </div>
       <div id="sb-footer">
         <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.45);margin-bottom:5px;letter-spacing:0.06em;text-transform:uppercase;">Supporting Advisers</div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.44<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.18);line-height:1.6;">Desktop v3.45<br>© GBX PS Pty Ltd<br>Built for Clime Investment Management</div>
       </div>
     </aside>
 
@@ -732,7 +737,7 @@ a { color: inherit; }
           <div class="settings-card">
             <div class="settings-card-hd">Version</div>
             <div class="settings-row">
-              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.44</div></div>
+              <div><div class="settings-row-name" id="settings-version-num">Desktop v3.45</div></div>
             </div>
           </div>
           <div style="margin-top:14px">
@@ -1708,6 +1713,26 @@ const Practice = {
     const redoBtn = document.getElementById('prac-btn-redo');
     if (redoBtn) redoBtn.classList.add('hidden');
 
+    // Weak areas — sections with at least one wrong answer, worst first
+    const weak = Object.entries(this._secTrack || {})
+      .map(([name, d]) => ({ name, correct: d.correct, total: d.total, wrong: d.total - d.correct }))
+      .filter(t => t.wrong > 0)
+      .sort((a, b) => b.wrong - a.wrong);
+    this._weakSections = weak.map(t => t.name);
+
+    const weakBtn = weak.length ? `<button class="btn-session-secondary" onclick="Practice.toggleWeakAreas()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          Show areas to practice
+        </button>` : '';
+
+    const weakCard = weak.length ? `<div class="prac-weak-card" id="prac-weak-card" style="display:none">
+        <div class="prac-weak-title">Areas to practice</div>
+        <div class="prac-weak-body">` +
+      weak.map(t => `<div class="weak-row"><span>${esc(t.name)}</span><span class="weak-wrong">${t.correct} / ${t.total} correct</span></div>`).join('') +
+      `</div>
+        <button class="prac-weak-go" onclick="Practice.practiceWeakAreas()">Practice these areas →</button>
+      </div>` : '';
+
     // Right panel — replace with session complete summary
     const right = document.getElementById('prac-right');
     right.innerHTML = `<div class="session-complete">
@@ -1730,8 +1755,30 @@ const Practice = {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
           Redo ${this.mistakes.length} mistake${this.mistakes.length > 1 ? 's' : ''}
         </button>` : ''}
+        ${weakBtn}
       </div>
+      ${weakCard}
     </div>`;
+  },
+
+  toggleWeakAreas() {
+    const card = document.getElementById('prac-weak-card');
+    if (!card) return;
+    const open = card.style.display !== 'none';
+    card.style.display = open ? 'none' : 'block';
+    if (!open) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  },
+
+  practiceWeakAreas() {
+    const secs = this._weakSections || [];
+    if (!secs.length) return;
+    let pool = Q.filter(q => secs.includes(q.section || 'General'));
+    // deduplicate
+    const seen = new Set();
+    pool = pool.filter(q => { const k = q.id || q.q; if (seen.has(k)) return false; seen.add(k); return true; });
+    if (pool.length < 5) { App.startPractice(); return; }
+    Practice.init(shuffle(pool));
+    App.go('practice');
   },
 
   showReview() {
